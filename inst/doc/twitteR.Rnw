@@ -1,0 +1,50 @@
+\documentclass[letter]{article}
+%\VignetteIndexEntry{Twitter client for R}
+%\VignettePackage{twitteR}
+%\VignetteKeywords{Documentation}
+
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\texttt{#1}}}
+\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+
+\begin{document}
+
+\title{Twitter client for R}
+\author{Jeff Gentry}
+\maketitle
+
+\section{Introduction}
+
+Twitter is a popular service that allows users to broadcast short
+messages ('\emph{tweets}') for others to read.  These can be used to
+communicate wtih friends, to display headlines, for restaurants to
+list daily specials, and more.
+
+The \Rpackage{twitteR} package is intended to provide access to the
+Twitter API within R.  Using the S4 classes \Rclass{user},
+\Rclass{status} and \Rclass{directMessage}, users can read and write
+information via the Twitter server.
+
+\subsection{Disclaimer}
+
+At this time, the package does not yet fully support the Twitter API.
+Currently basic operations are supported but there are still gaps in
+searching capabilities as well as account administration.  Also, many
+commands do not yet support all possible arguments to calls. Lastly,
+because any authenticated action would require a valid Twitter login,
+many operations in this vignette are pregenerated.
+
+\section{Session Information}
+
+The version number of R and packages loaded for generating the vignette were:
+
+\begin{verbatim}
+<<echo=FALSE,results=tex>>=
+sessionInfo()
+@
+\end{verbatim}
+
+\end{document}
