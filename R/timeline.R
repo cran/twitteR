@@ -23,7 +23,7 @@ userTimeline <- function(user, session=getCurlHandle()) {
         user <- user@screenName
 
     url <- paste("http://twitter.com/statuses/user_timeline.json?screen_name=",
-                 user, sep="")
+                 URLencode(user), sep="")
     out <- getURL(url, curl=session)
     jsonList <- twFromJSON(out)
     sapply(jsonList, buildStatus)

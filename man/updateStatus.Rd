@@ -3,6 +3,7 @@
 \alias{updateStatus}
 \alias{deleteStatus}
 \alias{showStatus}
+\alias{tweet}
 \title{
   Functions to manipulate Twitter status
 }
@@ -10,6 +11,7 @@
   These functions can be used to set or delete a user's Twitter status
 }
 \usage{
+tweet(text, session = getCurlHandle())
 updateStatus(text, session = getCurlHandle())
 deleteStatus(status, session = getCurlHandle())
 }
@@ -19,6 +21,8 @@ deleteStatus(status, session = getCurlHandle())
   \item{session}{An object from \code{\link{initSession}}}
 }
 \details{
+  The \code{tweet} and \code{updateStatus} functions are the same.
+   
   To delete a status message, pass in an object of class
   \code{\link{status}}, such as from the return value of \code{updateStatus}.
 }

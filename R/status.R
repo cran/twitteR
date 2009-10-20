@@ -7,11 +7,16 @@ updateStatus <- function(text, session=getCurlHandle()) {
     buildStatus(twFromJSON(rawToChar(out)))
 }
 
+tweet <- function(text, session=getCurlHandle()) {
+    ## Just a wrapper around updateStatus
+    updateStatus(text, session)
+}
+
 showStatus <- function(id, session=getCurlHandle()) {
     ## Doesn't require authentication via initSession unless the owner
     ## of the status is protected
     url <- paste("http://twitter.com/statuses/show/",
-                        id, ".json", sep="")
+                        URLencode(id), ".json", sep="")
     out <- getURL(url)
     ret <- twFromJSON(out)
     buildStatus(ret)

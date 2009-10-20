@@ -93,6 +93,17 @@ buildStatus <- function(json) {
     if (!is.list(json))
         return(new("status"))
 
+    if ('user' %in% names(json)) {
+        user <- buildUser(json[['user']])
+        screenName <- screenName(user)
+    }
+    else if ('from_user' %in% names(json)) {
+        screenName <- json$from_user
+    }
+    else {
+        screenName <- "Unknown"
+    }
+
     if ((is.null(json$"in_reply_to_screen_name"))||(is.na(json$"in_reply_to_screen_name")))
         json$"in_reply_to_screen_name" <- character()
     if ((is.null(json$"in_reply_to_status_id"))||(is.na(json$"in_reply_to_status_id")))
@@ -122,5 +133,6 @@ buildStatus <- function(json) {
         replyToSID=json$"in_reply_to_status_id",
         id=json$id,
         replyToUID=json$"in_reply_to_user_id",
-        statusSource=json$source)
+        statusSource=json$source,
+        screenName=screenName)
 }

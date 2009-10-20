@@ -7,7 +7,33 @@
 \alias{screenName}
 \alias{screenName,user-method}
 \alias{show,user-method}
-
+\alias{description,user-method}
+\alias{statusesCount,user-method}
+\alias{statusesCount}
+\alias{created}
+\alias{description}
+\alias{favoritesCount}
+\alias{followersCount}
+\alias{friendsCount}
+\alias{followersCount,user-method}
+\alias{favoritesCount,user-method}
+\alias{friendsCount,user-method}
+\alias{userURL,user-method}
+\alias{userURL}
+\alias{name,user-method}
+\alias{name}
+\alias{created,user-method}
+\alias{tweetCount,user-method}
+\alias{tweetCount}
+\alias{protected,user-method}
+\alias{protected}
+\alias{verified,user-method}
+\alias{verified}
+\alias{location,user-method}
+\alias{location}
+\alias{id,user-method}
+\alias{lastStatus,user-method}
+\alias{lastStatus}
 \title{A container object to model Twitter users }
 \description{This class is designed to represent a user on Twitter,
   modeling information available}
@@ -52,9 +78,20 @@
   \describe{
     \item{screenName}{Returns the screen name of the user }
     \item{show}{Displays basic information about the user }
-	 }
+    \item{description}{Returns the user's description}
+    \item{statusesCount}{Returns the number of tweets for the user}
+    \item{followersCount}{Returns the number of followers the user has }
+    \item{friendsCount}{Returns the number of friends for the user}
+    \item{userURL}{Retrieves the URL associated with the user}
+    \item{name}{Retrieves the user's name}
+    \item{created}{Returns the creation time of the user}
+    \item{protected}{Returns the protection status of the user's
+      timeline}
+    \item{verified}{Returns the verified status of the user}
+    \item{location}{Returns the location of the user}
+    \item{id}{Returns the user's ID}
+    \item{lastStatus}{Returns the last tweet the user posted}
+  }
 }
 \author{Jeff Gentry}
-\seealso{
-}
 \keyword{classes}
