@@ -1,21 +1,19 @@
-\name{Rtweets}
-\alias{Rtweets}
-\title{ Retrieve latest R related tweets }
+\name{searchTwitter}
+\alias{searchTwitter}
+\title{ Search twitter }
 \description{
-  This function will look at the \code{#rstats} hashtag and return status
-  updates that are related to R
+  This function will issue a search of Twitter based on a supplied
+  search string.
 }
 \usage{
-Rtweets(session = getCurlHandle(), num=25)
+searchTwitter(searchString, session = getCurlHandle(), num=25)
 }
 \arguments{
+  \item{searchString}{Search query to issue to twitter}
   \item{session}{ A session object from \code{\link{initSession}}}
   \item{num}{The number of tweets to return}
 }
 \details{
-  This is not a full featured search, but simply a hard coded search for
-  the \code{#rstats} tag.
-
   A premade session is typically not going to be necessary, this command
   can be called without any parameters.  However, if a user has access
   to a protected user's timeline, they will not see any \code{#rstat} activity
@@ -28,7 +26,7 @@ Rtweets(session = getCurlHandle(), num=25)
 \seealso{ \code{\link{status}} }
 \examples{
     \dontrun{
-           Rtweets()
+           searchTwitter("#rstats", num=100)
     }
 }
 \keyword{ interface }

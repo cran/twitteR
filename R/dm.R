@@ -20,11 +20,7 @@ dmDestroy <- function(dm, session=getCurlHandle()) {
     ## I don't know how to simply POST or send a DELETE via RCurl w/o
     ## postForm, but this isn't a form so it throws a warning.
     ## Suppress these warnings
-    curOpt <- options("warn")
-    options(warn=-1)
-    on.exit(options(warn=curOpt$warn), add=TRUE)
-    out <- postForm(url, curl=session)
-    options(warn=curOpt$warn)
+    out <- suppressWarnings(postForm(url, curl=session))
     TRUE
 }
 
@@ -34,11 +30,7 @@ dmSend <- function(text, user, session=getCurlHandle()) {
     ## I don't know how to simply POST or send a DELETE via RCurl w/o
     ## postForm, but this isn't a form so it throws a warning.
     ## Suppress these warnings
-    curOpt <- options("warn")
-    options(warn=-1)
-    on.exit(options(warn=curOpt$warn), add=TRUE)
-    out <- postForm("http://twitter.com/direct_messages/new.json",
-                    text=text, user=user, curl=session)
-    options(warn=curOpt$warn)
+    out <- suppressWarnings(postForm("http://twitter.com/direct_messages/new.json",
+                                     text=text, user=user, curl=session))
     buildDM(twFromJSON(rawToChar(out)))
 }

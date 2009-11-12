@@ -1,14 +1,13 @@
 twFromJSON <- function(json) {
     ## Will provide some basic error checking, as well as suppress
     ## warnings that always seem to come out of fromJSON, even in good cases.
-    curOpt <- options("warn")
-    options(warn=-1)
-    on.exit(options(warn=curOpt$warn), add=TRUE)
-    out <- fromJSON(json)
-    options(warn=curOpt$warn)
-
+    out <- try(suppressWarnings(fromJSON(json)), silent=TRUE)
+    if (inherits(out, "try-error")) {
+        stop("Error: Malformed response from server, was not JSON")
+    }
     if (length(out) == 2) {
-        if (all(names(out) == c("request", "error")))
+        names <- names(out)
+        if ((!is.null(names))&&(all(names(out) == c("request", "error"))))
             stop("Error: ", out$error)
     }
     out

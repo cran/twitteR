@@ -28,10 +28,6 @@ deleteStatus <- function(status, session=getCurlHandle()) {
     ## I don't know how to simply POST or send a DELETE via RCurl w/o
     ## postForm, but this isn't a form so it throws a warning.
     ## Suppress these warnings
-    curOpt <- options("warn")
-    options(warn=-1)
-    on.exit(options(warn=curOpt$warn), add=TRUE)
-    out <- postForm(url, curl=session)
-    options(warn=curOpt$warn)
+    out <- suppressWarnings(postForm(url, curl=session))
     TRUE
 }
