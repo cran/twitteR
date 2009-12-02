@@ -11,14 +11,15 @@
   These functions can be used to set or delete a user's Twitter status
 }
 \usage{
-tweet(text, session = getCurlHandle())
-updateStatus(text, session = getCurlHandle())
-deleteStatus(status, session = getCurlHandle())
+tweet(text, session = getCurlHandle(), ...)
+updateStatus(text, session = getCurlHandle(), ...)
+deleteStatus(status, session = getCurlHandle(), ...)
 }
 \arguments{
   \item{text}{The text to use for a new status }
   \item{status}{An object of class \code{\link{status}}}
   \item{session}{An object from \code{\link{initSession}}}
+  \item{...}{Optional arguments to be passed to \code{\link{getURL}}}
 }
 \details{
   The \code{tweet} and \code{updateStatus} functions are the same.

@@ -9,15 +9,16 @@
   the Twitter universe
 }
 \usage{
-publicTimeline(session=getCurlHandle())
-userTimeline(user, session=getCurlHandle())
-friendsTimeline(session=getCurlHandle())
-mentions(session=getCurlHandle())
+publicTimeline(session=getCurlHandle(), ...)
+userTimeline(user, session=getCurlHandle(), ...)
+friendsTimeline(session=getCurlHandle(), ...)
+mentions(session=getCurlHandle(), ...)
 }
 \arguments{
   \item{user}{ The Twitter user to detail, can be \code{character} or
     an \code{\link{user}} object.}
   \item{session}{ A session object from \code{\link{initSession}} }
+  \item{...}{Optional arguments to be passed to \code{\link{getURL}}}
 }
 \details{
   The \code{userTimeline} function will only properly operate if the

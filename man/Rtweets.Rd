@@ -6,11 +6,12 @@
   updates that are related to R
 }
 \usage{
-Rtweets(session = getCurlHandle(), num=25)
+Rtweets(session = getCurlHandle(), num=25, ...)
 }
 \arguments{
   \item{session}{ A session object from \code{\link{initSession}}}
   \item{num}{The number of tweets to return}
+  \item{...}{Items to be passed to \code{\link{getURL}}}
 }
 \details{
   This is not a full featured search, but simply a hard coded search for

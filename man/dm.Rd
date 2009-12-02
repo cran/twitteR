@@ -9,10 +9,10 @@
   messages (DMs) in Twitter.
 }
 \usage{
-dmGet(session = getCurlHandle())
-dmSent(session = getCurlHandle())
-dmDestroy(dm, session = getCurlHandle())
-dmSend(text, user, session = getCurlHandle())
+dmGet(session = getCurlHandle(), num=20, ...)
+dmSent(session = getCurlHandle(), ...)
+dmDestroy(dm, session = getCurlHandle(), ...)
+dmSend(text, user, session = getCurlHandle(), ...)
 }
 \arguments{
   \item{text}{The text of a message to send}
@@ -20,6 +20,8 @@ dmSend(text, user, session = getCurlHandle())
     an \code{\link{user}} object.}
   \item{dm}{The message to delete, an object of class \code{\link{directMessage}}}
   \item{session}{ A session object from \code{\link{initSession}}}
+  \item{num}{ The number of direct messages to return }
+  \item{...}{Optional arguments to be passed to \code{\link{getURL}}}
 }
 \value{
   The \code{dmGet} and \code{dmSent} functions will return a list of

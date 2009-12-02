@@ -6,12 +6,13 @@
   search string.
 }
 \usage{
-searchTwitter(searchString, session = getCurlHandle(), num=25)
+searchTwitter(searchString, session = getCurlHandle(), num=25, ...)
 }
 \arguments{
   \item{searchString}{Search query to issue to twitter}
   \item{session}{ A session object from \code{\link{initSession}}}
   \item{num}{The number of tweets to return}
+  \item{...}{Optional arguments to be passed to \code{\link{getURL}}}
 }
 \details{
   A premade session is typically not going to be necessary, this command

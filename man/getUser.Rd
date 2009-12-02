@@ -9,14 +9,15 @@
   followers, and an up to date timeline.
 }
 \usage{
-getUser(user, session = getCurlHandle())
-userFriends(user, session = getCurlHandle())
-userFollowers(user, session = getCurlHandle())
+getUser(user, session = getCurlHandle(), ...)
+userFriends(user, session = getCurlHandle(), ...)
+userFollowers(user, session = getCurlHandle(), ...)
 }
 \arguments{
   \item{user}{ The Twitter user to detail, can be \code{character} or
     an \code{\link{user}} object.}
   \item{session}{ A session object from \code{\link{initSession}} }
+  \item{...}{Optional arguments to be passed to \code{\link{getURL}}}
 }
 \details{
   These functions will only return fully formed objects if the
