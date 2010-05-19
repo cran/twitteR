@@ -6,12 +6,12 @@
   search string.
 }
 \usage{
-searchTwitter(searchString, session = getCurlHandle(), num=25, ...)
+searchTwitter(searchString, session = getCurlHandle(), n=25, ...)
 }
 \arguments{
   \item{searchString}{Search query to issue to twitter}
   \item{session}{ A session object from \code{\link{initSession}}}
-  \item{num}{The number of tweets to return}
+  \item{n}{The number of tweets to return}
   \item{...}{Optional arguments to be passed to \code{\link{getURL}}}
 }
 \details{
@@ -27,7 +27,7 @@ searchTwitter(searchString, session = getCurlHandle(), num=25, ...)
 \seealso{ \code{\link{status}} }
 \examples{
     \dontrun{
-           searchTwitter("#rstats", num=100)
+           searchTwitter("#rstats", n=100)
     }
 }
 \keyword{ interface }

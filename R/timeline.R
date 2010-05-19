@@ -14,9 +14,6 @@ friendsTimeline <- function(session=getCurlHandle(), ...) {
 }
 
 userTimeline <- function(user, session=getCurlHandle(), ...) {
-    if (inherits(user, "user"))
-        user <- user@screenName
-
     ## FIXME: Does not support any parameters
     ## Only requires authentication if 'user' is protected
     if (inherits(user, "user"))

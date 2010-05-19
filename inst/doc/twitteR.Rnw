@@ -15,6 +15,13 @@
 \author{Jeff Gentry}
 \maketitle
 
+\section{IMPORTANT NOTICE}
+
+The old Twitter authentication mechanism is being removed in June,
+2010 in favor of OAuth.  As of this writing there is not an OAuth
+solution for R, so unless someone (or myself) writes such a beast you
+will not be able to access any authenticated aspects of Twitter.
+
 \section{Introduction}
 
 Twitter is a popular service that allows users to broadcast short
