@@ -1,9 +1,9 @@
-Rtweets <- function(session=getCurlHandle(), num=25, ...) {
-    searchTwitter("#rstats", session, num, ...)
+Rtweets <- function(n=25, session=getCurlHandle(), ...) {
+    searchTwitter("#rstats", n, session, ...)
 }
 
-searchTwitter <- function(searchString, session=getCurlHandle(),
-                          n=25, ...) {
+searchTwitter <- function(searchString, n=25,
+                          session=getCurlHandle(), ...) {
     ## A basic search function.  Only implements a search on a string
     ## and will return n results
     if (n <= 0)
@@ -12,19 +12,37 @@ searchTwitter <- function(searchString, session=getCurlHandle(),
     qrySearch <- URLencode(searchString)
     if (nchar(qrySearch) > 140)
         stop("searchString is limited to 140 characters")
-    page <- 1
-    total <- n
-    if (n > 100)
-        n <- 100
     jsonList <- list()
-    while (total > 0) {
-        url <- paste("http://search.twitter.com/search.json?q=",
-                     qrySearch, "&rpp=", n,
-                     "&page=", page, sep="")
+
+    batchSize <- ifelse(n < 100, n, 100)
+    pageStr <- paste("?rpp=", batchSize,
+                     "&page=1&q=",
+                     qrySearch, sep='')
+    curDiff <- n
+    while (curDiff > 0) {
+        url <- paste("http://search.twitter.com/search.json",
+                     pageStr, "&result_type=recent",
+                     sep="")
         out <- getURL(url, ...)
-        jsonList <- c(jsonList, twFromJSON(out)[[1]])
-        total <- total - n
-        page <- page + 1
+        fromJSON <- twFromJSON(out)
+        newList <- fromJSON$results
+        jsonList <- c(jsonList, newList)
+        curDiff <- n - length(jsonList)
+        if (curDiff > 0) {
+            if ("next_page" %in% names(fromJSON)) {
+                pageStr <- fromJSON$"next_page"
+                if (curDiff < 100) {
+                    ## We don't want to get a full 100 results, replace
+                    ## what twitter tells us with our curDiff
+                    pageStr <- sub("rpp=[[:alnum:]]+",
+                                   paste("rpp", curDiff, sep="="),
+                                   pageStr)
+                }
+
+            } else {
+                break
+            }
+        }
     }
     sapply(jsonList, buildStatus)
 }

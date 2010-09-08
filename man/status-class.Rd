@@ -22,6 +22,8 @@
 \alias{statusSource,status-method}
 \alias{statusSource}
 \alias{screenName,status-method}
+\alias{statusText}
+\alias{statusText,status-method}
 \title{Class to contain a Twitter status}
 \description{Container for Twitter status messages, including the text
   as well as basic information}
@@ -30,7 +32,7 @@
     text = [character],
     favorited = [logical],
     replyToSN = [character],
-    created = [character],
+    created = [POSIXct],
     truncated = [logical],
     replyToSID = [numeric],
     id = [numeric],
@@ -58,7 +60,7 @@
 \section{Methods}{
   \describe{
     \item{show}{Displays information about the status}
-    \item{text}{Returns the text of the status}
+    \item{statusText}{Returns the text of the status}
     \item{favorited}{Returns the favorited information for the status}
     \item{replyToSN}{Returns the replyToSN slot for this status}
     \item{created}{Retrieves the creation time of this status}
@@ -72,7 +74,6 @@
 }
 \author{Jeff Gentry}
 \seealso{
-  \code{\link{updateStatus}}, \code{\link{publicTimeline}},
-  \code{\link{friendsTimeline}}, \code{\link{userTimeline}}
+  \code{\link{publicTimeline}},\code{\link{userTimeline}}
 }
 \keyword{classes}
