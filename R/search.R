@@ -3,7 +3,9 @@ Rtweets <- function(n=25, session=getCurlHandle(), lang=NULL, since=NULL, ...) {
 }
 
 searchTwitter <- function(searchString, n=25, 
-                          session=getCurlHandle(), lang=NULL, since=NULL, ...) {
+                          session=getCurlHandle(), lang=NULL,
+                          since=NULL, until=NULL, locale=NULL,
+                          geocode=NULL, ...) {
     ## A basic search function.  Only implements a search on a string
     ## and will return n results
     if (n <= 0)
@@ -19,11 +21,11 @@ searchTwitter <- function(searchString, n=25,
     pageStr <- paste("?rpp=", batchSize,
                      "&page=1&q=",
                      qrySearch, sep='')
-    if (! is.null(lang)) {
-      pageStr <- paste(pageStr, '&lang=', lang, sep='')
-    }
-    if (! is.null(since)) {
-      pageStr <- paste(pageStr, '&since=', since, sep='')
+
+    for (arg in c('lang', 'locale', 'since', 'until', 'geocode')) {
+      val <- get(arg)
+      if (!is.null(val))
+        pageStr <- paste(pageStr, '&', arg, '=', val, sep='')
     }
 
     curDiff <- n
