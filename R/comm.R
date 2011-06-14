@@ -36,7 +36,8 @@ setRefClass('twAPIInterface',
               },
               twFromJSON = function(json) {
                 ## Will provide some basic error checking, as well as suppress
-                ## warnings that always seem to come out of fromJSON, even in good cases.
+                ## warnings that always seem to come out of fromJSON, even
+                ## in good cases. 
                 out <- try(suppressWarnings(fromJSON(json)), silent=TRUE)
                 if (inherits(out, "try-error")) {
                   stop("Error: Malformed response from server, was not JSON")
@@ -53,12 +54,14 @@ setRefClass('twAPIInterface',
                 }
                 if (length(out) == 2) {
                   names <- names(out)
-                  if ((!is.null(names))&&(all(names(out) == c("request", "error"))))
+                  if ((!is.null(names))&&(all(names(out) == c("request",
+                                                     "error"))))
                     stop("Error: ", out$error)
                 }
                 out
               },
-              doAPICall = function(cmd, params=NULL, method="GET", url=NULL, ...) {
+              doAPICall = function(cmd, params=NULL, method="GET",
+                url=NULL, ...) {
                 ## will perform an API call and process the JSON.  For GET
                 ## calls, try to detect errors and if so attempt up to 3
                 ## more times before returning with an error.  Many twitter
@@ -189,15 +192,22 @@ doRppAPICall = function(num, params, ...) {
 }
 
 twitterDateToPOSIX <- function(dateStr) {
-  ## Weird - Date format can vary depending on the situation
-  created <- as.POSIXct(dateStr, tz='UTC',
-                        format="%a %b %d %H:%M:%S +0000 %Y")
-  ## try again if necessary
-  if (is.na(created))
-    created <- as.POSIXct(dateStr, tz='UTC',
-                          format="%a, %d %b %Y %H:%M:%S +0000")
+  ## In typical twitter fashion, there are multiple ways that they
+  ## spit dates back at us.  First, let's take a look at unix
+  ## epoch time, and then try a few data string formats
+  dateInt <- suppressWarnings(as.numeric(dateStr))
+  if (!is.na(dateInt)) {
+    posDate <- as.POSIXct(dateInt, origin='1970-01-01')
+  } else {
+    posDate <- as.POSIXct(dateStr, tz='UTC',
+                          format="%a %b %d %H:%M:%S +0000 %Y")
+    ## try again if necessary
+    if (is.na(posDate))
+      posDate <- as.POSIXct(dateStr, tz='UTC',
+                            format="%a, %d %b %Y %H:%M:%S +0000")
+  }
   ## might still be NA, but we tried
-  created
+  posDate
 }
 
 

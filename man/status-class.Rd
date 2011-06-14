@@ -6,6 +6,7 @@
 \alias{status}
 \alias{buildStatus}
 \alias{show,status-method}
+\alias{as.data.frame,status-method}
 \alias{text,status-method}
 \alias{favorited,status-method}
 \alias{favorited}
@@ -25,6 +26,9 @@
 \alias{screenName,status-method}
 \alias{statusText}
 \alias{statusText,status-method}
+\alias{[[,twitterObjList-method}
+\alias{as.data.frame,twitterObj-method}
+\alias{show,twitterObjList-method}
 \title{Class to contain a Twitter status}
 \description{Container for Twitter status messages, including the text
   as well as basic information}
@@ -40,6 +44,14 @@
     \item{\code{created}:}{When this status was created}
     \item{\code{truncated}:}{Whether this status was truncated}
     \item{\code{favorited}:}{Whether this status has been favorited}
+  }
+}
+\section{Methods}{
+  \describe{
+     \item{\code{toDataFrame}:}{Converts this into a one row
+       \code{\link{data.frame}}, with each field representing a column.
+       This can also be accomplished by the S4 style
+       \code{as.data.frame(objectName)}.}
   }
 }
 \details{
