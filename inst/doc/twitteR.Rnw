@@ -147,14 +147,10 @@ access.
 \subsection{Trends}
 
 Twitter keeps track of topics that are popular at any given point of time,
-and allows one to extract that data.  We're able to get the 10 currently
-trending topics, see the 20 trending topics per hour for a given day,
-or the 30 trending topics per day for a given week.
+and allows one to extract that data.  We're able to see the 20 trending 
+topics per hour for a given day, or the 30 trending topics per day for a given week.
 
 <<trends>>=
-   curTrends <- getTrends('current')
-   curTrends[1:2]
-
    yesterdayTrends <- getTrends('daily', date=as.character(Sys.Date()-1))
    length(yesterdayTrends)
    

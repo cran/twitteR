@@ -34,7 +34,7 @@ setRefClass("status",
                   if (!is.null(json[['text']]))
                     text <<- json[['text']]
                   if (is.null(json[['favorited']]))
-                    favorited <<- json[['favorited']]
+                    favorited <<- FALSE
                   else
                     favorited <<- TRUE
                   if (is.null(json[['truncated']]))
@@ -52,12 +52,12 @@ setRefClass("status",
                     replyToSN <<- json[['in_reply_to_screen_name']]
                   if ((!is.null(json[['in_reply_to_status_id']])) &&
                       (!is.na(json[['in_reply_to_status_id']])))
-                    replyToSID <<- json[['in_reply_to_status_id']]
+                    replyToSID <<- as.character(json[['in_reply_to_status_id']])
                   if ((!is.null(json[['in_reply_to_user_id']])) &&
                       (!is.na(json[['in_reply_to_user_id']])))
-                    replyToUID <<- json[['in_reply_to_user_id']]
+                    replyToUID <<- as.character(json[['in_reply_to_user_id']])
                   if (!is.null(json[['id']]))
-                    id <<- json[['id']]
+                    id <<- as.character(json[['id']])
                 }
                 callSuper(...)
               }
