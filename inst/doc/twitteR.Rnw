@@ -42,9 +42,8 @@ with direct messages and enjoying enhanced API rate limitations.
 
 \subsection{Notes for this version}
 
-The reworking is still underway.  This version brings some bug fixes,
-an easier mechanism to convert from the returned object lists to data.frames, 
-and support for the Twitter trends API.
+The reworking is still underway.  The primary change for this version
+has been better support for R-2.14
 
 \subsection{Notes on API coverage}
 
@@ -55,8 +54,8 @@ please contact me.
 
 \subsection{Notes on the classes}
 
-There are four classes in this package: \Robject{user}, \Robject{status},
-\Robject{trend}, and \Robject{directMessage}.  As of this version they have 
+There are five classes in this package: \Robject{user}, \Robject{status},
+\Robject{trend}, \Robject{rateLImitInfo}, and \Robject{directMessage}.  As of this version they have 
 all been implemented as reference classes (see \Rfunction{setRefClass}).  The
 first two were previously implemented as S4 classes.  To help maintain
 backwards compatibility, the S4 methods (all accessors) have been left
@@ -181,25 +180,19 @@ due to issues with character encoding, locales, etc.
 
 \subsection{Conversion to data.frames}
 
-While still not as convenient as it should be, there is a new mechanism to
-assist with the process of converting the object lists returned by many
-functions in the \Rpackage{twitteR} package into a \Robject{data.frame}
-structure.  To do this, every object of every class has a reference
-method \Rfunction{toDataFrame} as well as a corresponding S4 method 
-\Rfunction{as.data.frame} that works in the traditional sense.  Converting
-a single object will typically not be particularly useful by itself, but
-it does enable the currently kludgey mechanism for whole list conversion,
-such as using the \Robject{publicTweets} variable we had earlier:
+There are times when it is convenient to display the object lists as
+an \Robject{data.frame} structure.  To do this, every class has a
+reference method \Rfunction{toDataFrame} as well as a corresponding S4
+method \Rfunction{as.data.frame} that works in the traditional sense.
+Converting a single object will typically not be particularly useful
+by itself but there is a convenience method to convert an entire list,
+\Rfunction{twListToDF} which takes a list of objects from a single
+\Rpackage{twitteR} class:
 
 <<dataFrame>>=
-   df <- do.call('rbind', lapply(publicTweets, as.data.frame))
-   dim(df)
+   df <- twListToDF(publicTweets)
+   df[1:3,1:3]
 @ 
-
-What we're doing here is calling \Rfunction{lapply} on all of the
-\Rclass{status} objects stored in the \Robject{publicTweets} list,
-and calling their \Rfunction{as.data.frame} method.  These are combined
-by row using \Rfunction{do.call}.
 
 \section{Authentication with OAuth}
 

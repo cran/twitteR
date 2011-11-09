@@ -1,5 +1,6 @@
-fdce4bc88b88dd19cd865e19fb25cfe3 *DESCRIPTION
-e9974495c0439d3083b9787b0354becd *NAMESPACE
+a36b8aabb80bba3a13c131ac6ea19c70 *DESCRIPTION
+2f7cf52663ff4380a6469113a9a698be *NAMESPACE
+3c4785d7ae1d2c642edce91ef7e096d4 *R/account.R
 1946813ccf91a759349fdf0b7ca06ae0 *R/allGenerics.R
 67305cf689e34a3a2eb98e96b4c90e7b *R/base.R
 4448b7551b5c37fe458f0f4313ccc02a *R/comm.R
@@ -10,15 +11,17 @@ a2e7e8262dceda03cf2674fa0884bc09 *R/search.R
 b1a81c127d7fc6f5d9b7892768a1ae91 *R/statuses.R
 74c988624f1292cde21817c94479aed0 *R/toys.R
 96138e728d05a7893418bcafd2abb7e7 *R/trends.R
-8981e2ed435b2dbc3e56c6eb20e4a0e6 *R/users.R
-e4651dfb2d9cdfdaa7f17f7c4c4ae837 *R/utils.R
+976717679ae328be64d0d1945f011ee8 *R/users.R
+b584cca5e74a8cfb6216dde789e8bc3b *R/utils.R
 e53c5dea1da448dde00c995b7f4e829d *R/zzz.R
-cb9a2c28a3dabf40324053fda611e4c5 *inst/doc/twitteR.Rnw
-d8ff527ece2c28b25396444e75577af0 *inst/doc/twitteR.pdf
+5e13f02c2133d66621000c5cad545f4a *inst/doc/twitteR.Rnw
+ff2597c63e0fd72eeff0f925a615bb6b *inst/doc/twitteR.pdf
 a99b39779307b1cca91af42ea6c675e3 *man/directMessage-class.Rd
 64d97174a0f91336d374fcba51564cdb *man/dm.Rd
+a850d7f7dae4ac2569c30c266f5cb70a *man/getCurRateLimitInfo.Rd
 0154be6f4ef9e5cd12cb4f5f96b549f9 *man/getTrends.Rd
 a0bab46726b04bf5c2488afa6241631d *man/getUser.Rd
+eb9c1b4065eb15d7d5a93b01bcb9ddb1 *man/rateLimitInfo-class.Rd
 fdea851e521e2d2baf4e01e49a4f620d *man/registerTwitterOAuth.Rd
 512f586f47646b8726bdcd2314c4f137 *man/search.Rd
 aa2262b36b1a9cbcaa89bf5079257e68 *man/showStatus.Rd
@@ -26,5 +29,6 @@ aa2262b36b1a9cbcaa89bf5079257e68 *man/showStatus.Rd
 56f67d8de4ebc6473642bb1b2e34aa28 *man/taskStatus.Rd
 eacc8abe4bd8d708c29d37a7dafbede1 *man/timelines.Rd
 eb16e06d17872525f350197588a17475 *man/trend-class.Rd
+1797760e5369ca34d1040b09ede84588 *man/twListToDF.Rd
 7bd0f2cfff70e21164dcc1b08ed09c18 *man/updateStatus.Rd
 e11e0cf157c6ad811ee5b853f3fc49bc *man/user-class.Rd
