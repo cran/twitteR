@@ -40,6 +40,17 @@ with direct messages and enjoying enhanced API rate limitations.
 
 \section{Initial Notes}
 
+\subsection{Support mailing list}
+
+While this package doesn't generate a huge volume of emails to me, I
+have found that the same questions tends to come up repeatedly (often
+when something has been broken!). I also field requests for advice on
+practical application of this package which is an area that I'm far
+from expert at.  I've set up a mailing list to better manage emails from users as this way,
+with the idea being that there'll now be a searchable archive and
+perhaps other users might be able to chime in.  The URL for this
+mailing list is \url{http://lists.hexdump.org/listinfo.cgi/twitter-users-hexdump.org}
+
 \subsection{Notes for this version}
 
 The reworking is still underway.  The primary change for this version
@@ -231,6 +242,15 @@ At this point, you'll be prompted with another URL, go to that URL with
 your browser and you'll be asked to approve the connection for this 
 application.  Once you do this, you'll be presented with a PIN, enter 
 that into your R session.  Your object is now verified.  
+
+Lastly, to use that credential object within an R session, use the
+\Rfunction{registerTwitterOAuth} function.  Passing your \Robject{OAuth}
+object to that function will cause all of the API calls to go through 
+Twitter's OAuth mechanism instead of the standard URLs:
+
+<<RegisterOAuth,eval=FALSE>>=
+   registerTwitterOAuth(cred)
+@
 
 The \Robject{OAuth} object, once the handshake is complete, can be saved
 to a file and reused.  You should not ever have to redo the handshake
