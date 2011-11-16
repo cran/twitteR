@@ -179,6 +179,10 @@ doRppAPICall = function(num, params, ...) {
         splitParams <- strsplit(strsplit(gsub('\\?', '', URLdecode(fromJSON$next_page)), '&')[[1]], '=')
         newParams <- lapply(splitParams, function(x) x[2])
         names(newParams) <- sapply(splitParams, function(x) x[1])
+        ## As of 11/16/11 (at least) they've started returning a modified "q" field which Id
+        ## don't want to preserve. Take that out if it exists
+        newParams <- newParams[setdiff(names(newParams), "q")]
+        
         params[names(newParams)] <- newParams
         if (curDiff < maxResults)
           ## If we no longer want max entities, only get curDiff
