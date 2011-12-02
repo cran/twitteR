@@ -1,7 +1,7 @@
 Package: twitteR
 Title: R based Twitter client
 Description: Provides an interface to the Twitter web API
-Version: 0.99.14
+Version: 0.99.15
 Author: Jeff Gentry <geoffjentry@gmail.com>
 Maintainer: Jeff Gentry <geoffjentry@gmail.com>
 Depends: R (>= 2.12.0), RCurl, RJSONIO, methods
@@ -12,6 +12,6 @@ URL: http://lists.hexdump.org/listinfo.cgi/twitter-users-hexdump.org
 Collate: allGenerics.R base.R account.R statuses.R users.R trends.R
         s4methods.R dm.R comm.R followers.R search.R toys.R utils.R
         zzz.R
-Packaged: 2011-11-16 23:40:51 UTC; gentrj
+Packaged: 2011-12-02 04:34:12 UTC; gentrj
 Repository: CRAN
-Date/Publication: 2011-11-17 11:26:09
+Date/Publication: 2011-12-02 16:23:22
