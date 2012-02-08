@@ -1,4 +1,4 @@
-69a4d319a923ee7bd188d578b2659c2e *DESCRIPTION
+a3e4a2f853bea2ce2d1b638c1fe16d22 *DESCRIPTION
 2f7cf52663ff4380a6469113a9a698be *NAMESPACE
 3c4785d7ae1d2c642edce91ef7e096d4 *R/account.R
 1946813ccf91a759349fdf0b7ca06ae0 *R/allGenerics.R
@@ -11,11 +11,11 @@ a2e7e8262dceda03cf2674fa0884bc09 *R/search.R
 6dc6d781212f76b348b1a42afc279083 *R/statuses.R
 74c988624f1292cde21817c94479aed0 *R/toys.R
 a5f2d0fada1575684fc758ec4796314c *R/trends.R
-ae924fbfbfb540175c1935e588b62be2 *R/users.R
-6dc734e77bd9742256ad2d517bd8cead *R/utils.R
+669e411502c5f499649f6852bbd15821 *R/users.R
+d850d1ca2259f1032bc0f21b3137d3be *R/utils.R
 e53c5dea1da448dde00c995b7f4e829d *R/zzz.R
 b01f880d4a1bbfe7b4953d5349f40a88 *inst/doc/twitteR.Rnw
-1a2440ede4105f4f8a4ccc41c7834288 *inst/doc/twitteR.pdf
+11d612c59c21651bb0bc90c42c206624 *inst/doc/twitteR.pdf
 a99b39779307b1cca91af42ea6c675e3 *man/directMessage-class.Rd
 64d97174a0f91336d374fcba51564cdb *man/dm.Rd
 a850d7f7dae4ac2569c30c266f5cb70a *man/getCurRateLimitInfo.Rd
