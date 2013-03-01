@@ -1,11 +1,10 @@
-exportClasses('status', 'user', 'directMessage', 'trend', "rateLimitInfo")
+exportClasses('status', 'user', 'directMessage')
 exportMethods(as.data.frame, screenName, show, favorited, replyToSN,
               statusesCount, tweetCount, followersCount,
               favoritesCount, friendsCount, userURL, created,
               protected, verified, location, lastStatus, show,
               description, name, id, statusText, truncated, statusSource)
 
-export("rateLimitInfoFactory")
 export("getCurRateLimitInfo")
 export('statusFactory')
 export('buildStatus')
@@ -19,12 +18,9 @@ export('dmDestroy')
 export('dmSend')
 export('Rtweets')
 export('searchTwitter')
-export('publicTimeline')
 export('userTimeline')
 export('homeTimeline')
 export('mentions')
-export('retweetedByMe')
-export('retweetedToMe')
 export('retweetsOfMe')
 export('showStatus')
 export('getUser')
@@ -33,8 +29,8 @@ export("updateStatus")
 export('tweet')
 export('deleteStatus')
 export('taskStatus')
-export('trendFactory')
-export('buildTrend')
 export('getTrends')
+export('availableTrendLocations')
+export('closestTrendLocations')
 export('twListToDF')
-
+export('friendships')

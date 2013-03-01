@@ -1,4 +1,4 @@
-getAPIStr <- function(cmd, version=1) {
+getAPIStr <- function(cmd, version=1.1) {
   if (hasOAuth()) {
     scheme <- "https"
   } else {
@@ -34,11 +34,24 @@ parseUsers <- function(users) {
   numUsers <- suppressWarnings(as.numeric(users))
   uids <- numUsers[!is.na(numUsers)]
   screen.names <- setdiff(users, uids)
-  return(list(user_id=paste(uids, collapse=','),
-              screen_name=paste(screen.names, collapse=',')))
+  
+  return(buildUserList(uids, screen.names))
+}
+
+buildUserList = function(uids, screen_names) {
+  user_list = list()  
+  if (length(uids) > 0) {
+    user_list$user_id = paste(uids, collapse=',')
+  }
+  if (length(screen_names) > 0) {
+    user_list$screen_name = paste(screen_names, collapse=',')
+  }
+  
+  return(user_list)  
 }
 
 twListToDF <- function(twList) {
+  browser()
   ## iff all elements of twList are from a class defined in this
   ## package, and all of the same class, will collapse these into
   ## a data.frame and return
@@ -46,7 +59,7 @@ twListToDF <- function(twList) {
   if (length(classes) != 1) {
     stop("Not all elements of twList are of the same class")
   }
-  if (! classes %in% c('status', 'user', 'directMessage', 'trend', 'rateLimitInfo')) {
+  if (! classes %in% c('status', 'user', 'directMessage', 'rateLimitInfo')) {
     stop("Elements of twList are not of an appropriate class")
   }
   do.call('rbind', lapply(twList, as.data.frame))

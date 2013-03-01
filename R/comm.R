@@ -23,6 +23,62 @@ getOAuth <- function() {
 ## has a completely different interface.  Trying to manage all of these below using one unified
 ## approach to actually sending the data back & receiving response and then providing multiple
 ## mechanisms to page
+twFromJSON = function(json) {
+  ## Will provide some basic error checking, as well as suppress
+  ## warnings that always seem to come out of fromJSON, even
+  ## in good cases. 
+  out <- try(suppressWarnings(rjson:::fromJSON(json, unexpected.escape="skip")), silent=TRUE)
+  if (inherits(out, "try-error")) {
+    stop("Error: Malformed response from server, was not JSON.\n",
+         "The most likely cause of this error is Twitter returning a character which\n",
+         "can't be properly parsed by R. Generally the only remedy is to wait long\n",
+         "enough for the offending character to disappear from searches (e.g. if\n",
+         "using searchTwitter()).")
+  }
+  
+  return(out)
+
+}
+
+doAPICall = function(cmd, params=NULL, method="GET", url=NULL, retryCount=5, 
+                     blockOnRateLimit=FALSE, ...) {
+  recall_func = function(count) {
+    return(doAPICall(cmd, params=params, method=method, url=url, retryCount=count,
+                     blockOnRateLimit=blockOnRateLimit, ...))
+  }
+  
+  if (is.null(url)) {
+    url <- getAPIStr(cmd)
+  }
+
+  if (!hasOAuth()) {
+    stop("OAuth authentication is required with Twitter's API v1.1")
+  }
+  
+  oauth = getOAuth()
+  out = try(oauth$OAuthRequest(url, params, method, ...), silent=TRUE)
+  if (inherits(out, "try-error")) {
+    error_message = gsub("\\r\\n", "", attr(out, "condition")[["message"]])
+    print(error_message)
+    if (error_message %in% c("Internal Server Error", "Service Unavailable")) {
+      print(paste("This error is likely transient, retrying up to", retryCount, "more times ..."))
+      ## These are typically fail whales or similar such things
+      Sys.sleep(1)
+      return(recall_func(retryCount - 1))      
+    } else if ((error_message == "Too Many Requests") && (blockOnRateLimit)) {
+      ## We're rate limited. Wait a while and try again
+      print("Rate limited .... blocking for a minute ...")
+      Sys.sleep(60)
+      return(recall_func(retryCount))      
+    } else {
+      stop("Error: ", error_message)
+    }
+  } 
+ 
+  json = twFromJSON(out)
+
+  return(json)  
+}
 
 setRefClass('twAPIInterface',
             fields = list(
@@ -34,78 +90,8 @@ setRefClass('twAPIInterface',
                 callSuper(...)
                 .self
               },
-              twFromJSON = function(json) {
-                ## Will provide some basic error checking, as well as suppress
-                ## warnings that always seem to come out of fromJSON, even
-                ## in good cases. 
-
-                ## FIXME: original code for RJSONIO, when I switch back,
-                ## use this line and not the next line ...
-                ##                out <- try(suppressWarnings(fromJSON(json, simplify=FALSE)), silent=TRUE)
-                ## FIXME: rjson's version of the line
-                out <- try(suppressWarnings(fromJSON(json)), silent=TRUE)
-                if (inherits(out, "try-error")) {
-                  stop("Error: Malformed response from server, was not JSON")
-                }
-                if ('error' %in% names(out)) {
-                  ## A few errors we want to stop on, and others we want to just
-                  ## give a warning
-                  if (length(grep("page parameter out of range",
-                                  out$error)) > 0) {
-                    warning("Error: ", out$error)
-                  } else {
-                    stop("Error: ", out$error)
-                  }
-                }
-                if (length(out) == 2) {
-                  names <- names(out)
-                  if ((!is.null(names))&&(all(names(out) == c("request",
-                                                     "error"))))
-                    stop("Error: ", out$error)
-                }
-                out
-              },
-              doAPICall = function(cmd, params=NULL, method="GET",
-                url=NULL, ...) {
-                ## will perform an API call and process the JSON.  For GET
-                ## calls, try to detect errors and if so attempt up to 3
-                ## more times before returning with an error.  Many twitter
-                ## HTML errors are very transient in nature and if it's a
-                ## real error there's little harm in repeating the call.
-                ## Don't do this on POST calls in case we incorrectly detect
-                ## an error, to avoid pushing the request multiple times.
-                if (is.null(url))
-                  url <- getAPIStr(cmd)
-                if (hasOAuth()) {
-                  APIFunc <- function(url, params, method, ...) {
-                    oauth <- getOAuth()
-                    oauth$OAuthRequest(url, params, method, ...)
-                  }
-                } else {
-                  APIFunc <- function(url, params, method, ...) {
-                    if (!is.null(params)) {
-                      paramStr <- paste(paste(names(params), params, sep='='),
-                                        collapse='&')
-                      url <- paste(url, paramStr, sep='?')
-                    }
-                    getURL(URLencode(url), ...)
-                  }
-                }
-                if (method == "POST") {
-                  out <- APIFunc(url, params, method, ...)
-                } else {
-                  count <- 1
-                  while (count < 4) {
-                    out <- APIFunc(url, params, method, ...)
-                    if (length(grep('html', out)) == 0) {
-                      break
-                    }
-                    count <- count + 1
-                  }
-                }
-
-                .self$twFromJSON(out)
-              }
+              twFromJSON = twFromJSON,
+              doAPICall = doAPICall
               )
             )
 
@@ -113,6 +99,7 @@ setRefClass('twAPIInterface',
 tint <- getRefClass('twAPIInterface')
 tint$accessors(names(tint$fields()))
 twInterfaceObj <- tint$new()
+
 
 doPagedAPICall = function(cmd, num, params=NULL, method='GET', ...) {
   if (num <= 0)
@@ -161,44 +148,30 @@ doCursorAPICall = function(cmd, type, num=NULL, params=NULL, method='GET', ...) 
   vals
 }
 
-doRppAPICall = function(num, params, ...) {
+doRppAPICall = function(cmd, num, params, ...) {
   if (! 'q' %in% names(params))
     stop("parameter 'q' must be supplied")
   maxResults <- twInterfaceObj$getMaxResults()
   params[['result_type']] <- 'recent'
-  params[['rpp']] <- ifelse(num < maxResults, num, maxResults)
-  params[['page']] <- 1
-  
-  url <- 'http://search.twitter.com/search.json'
-  
+  params[['count']] <- ifelse(num < maxResults, num, maxResults)
+    
   curDiff <- num
   jsonList <- list()
   while (curDiff > 0) {
-    fromJSON <- twInterfaceObj$doAPICall(NULL, params, 'GET', url=url, ...)
-    newList <- fromJSON$results
+    fromJSON <- twInterfaceObj$doAPICall(cmd, params, 'GET', ...)
+    newList <- fromJSON$statuses
     jsonList <- c(jsonList, newList)
     curDiff <- num - length(jsonList)
-    if (curDiff > 0) {
-      if ('next_page' %in% names(fromJSON)) {
-        ## The search API gives back the params part as an actual URL string, split this
-        ## back into list structure
-        splitParams <- strsplit(strsplit(gsub('\\?', '', URLdecode(fromJSON$next_page)), '&')[[1]], '=')
-        newParams <- lapply(splitParams, function(x) x[2])
-        names(newParams) <- sapply(splitParams, function(x) x[1])
-        ## As of 11/16/11 (at least) they've started returning a modified "q" field which Id
-        ## don't want to preserve. Take that out if it exists
-        newParams <- newParams[setdiff(names(newParams), "q")]
-        
-        params[names(newParams)] <- newParams
-        if (curDiff < maxResults)
-          ## If we no longer want max entities, only get curDiff
-          params[['rpp']] <- curDiff
-      } else {
-        break
-      }
+    if ((curDiff > 0) && ("search_metadata" %in% names(fromJSON)) && ("max_id_str" %in% names(fromJSON[["search_metadata"]]))) {
+      params[["max_id"]] = fromJSON[["search_metadata"]][["max_id_str"]]
     }
   }
-  jsonList
+  
+  if (length(jsonList) > num) {
+    jsonList = jsonList[seq_len(num)]
+  }
+  
+  return(jsonList)
 }
 
 twitterDateToPOSIX <- function(dateStr) {
@@ -225,7 +198,7 @@ twitterDateToPOSIX <- function(dateStr) {
                             format="%a, %d %b %Y %H:%M:%S +0000")
   }
   ## might still be NA, but we tried
-  posDate
+  return(posDate)
 }
 
 

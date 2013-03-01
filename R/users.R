@@ -22,7 +22,10 @@ setRefClass("user",
               screenName="character",
               location="character",
               id="character",
-              lastStatus="status"
+              lastStatus="status",
+              listedCount="numeric",
+              followRequestSent="logical",
+              profileImageUrl="character"
               ),
             methods = list(
               initialize = function(json, ...) {
@@ -63,8 +66,21 @@ setRefClass("user",
                   if (!is.null(json[["id_str"]])) {
                     id <<- as.character(json[["id_str"]])
                   }
-                  if (!is.null(json[['location']]))
+                  if (!is.null(json[['location']])) {
                     location <<- json[['location']]
+                  }
+                  if (!is.null(json[["listed_count"]])) {
+                    listedCount <<- json[["listed_count"]]
+                  }
+                  if ((is.null(json[["followRequestSent"]])) ||
+                      (json[["followRequestSent"]] == FALSE)) {
+                    followRequestSent <<- FALSE
+                  } else {
+                    followRequestSent <<- TRUE
+                  }
+                  if (!is.null(json[["profile_image_url"]])) {
+                    profileImageUrl <<- json[["profile_image_url"]]
+                  }
                 }
                 callSuper(...)
               },

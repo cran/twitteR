@@ -18,7 +18,9 @@ setRefClass("status",
               id="character",
               replyToUID="character",
               statusSource="character",
-              screenName="character"
+              screenName="character",
+              retweetCount="numeric",
+              retweeted="logical"
               ),
             methods=list(
               initialize = function(json, ...) {
@@ -66,6 +68,16 @@ setRefClass("status",
                   if (!is.null(json[['id_str']])) {
                     id <<- as.character(json[['id_str']])
                   }
+                  if (!is.null(json[["retweet_count"]])) {
+                    retweetCount <<- as.numeric(json[["retweet_count"]])
+                  }
+                  if ((is.null(json[['retweeted']])) ||
+                      (json[["retweeted"]] == FALSE)) {
+                    retweeted <<- FALSE
+                  } else {
+                    retweeted <<- TRUE
+                  }
+
                 }
                 callSuper(...)
               }
@@ -114,24 +126,19 @@ deleteStatus <- function(status, ...) {
   TRUE
 }
 
-publicTimeline <- function(...) {
-  jsonList <- twInterfaceObj$doAPICall('statuses/public_timeline')
-  sapply(jsonList, buildStatus)
-}
-
 showStatus <- function(id, ...) {
   if (!is.numeric(id))
     stop("id argument must be numeric")
   buildStatus(twInterfaceObj$doAPICall(paste('statuses', 'show', id, sep='/'), ...))
 }
 
-userTimeline <- function(user, n=20, maxID=NULL, sinceID=NULL, ...) {
-    ## AUTH: Will not work if user is protected until OAuth
+userTimeline <- function(user, n=20, maxID=NULL, sinceID=NULL, includeRts=FALSE, ...) {
   uParams <- parseUsers(user)
   cmd <- 'statuses/user_timeline'
   params <- buildCommonArgs(max_id=maxID, since_id=sinceID)
   params[['user_id']] <- uParams[['user_id']]
   params[['screen_name']] <- uParams[['screen_name']]
+  params$includeRts = ifelse(includeRts == TRUE, "true", "false")
   statusBase(cmd, params, n, 3200, ...)
 }
 
@@ -139,21 +146,16 @@ homeTimeline <- function(n=25, maxID=NULL, sinceID=NULL, ...)
   authStatusBase(n, 'home_timeline', maxID=maxID, sinceID=sinceID, ...)
 
 mentions <- function(n=25, maxID=NULL, sinceID=NULL, ...)
-  authStatusBase(n, 'mentions', maxID=maxID, sinceID=sinceID, ...)
-
-retweetedByMe <- function(n=25, maxID=NULL, sinceID=NULL, ...)
-  authStatusBase(n, 'retweeted_by_me', maxID=maxID, sinceID=sinceID, ...)
-
-retweetedToMe <- function(n=25, maxID=NULL, sinceID=NULL, ...) 
-  authStatusBase(n, 'retweeted_to_me', maxID=maxID, sinceID=sinceID, ...)
+  authStatusBase(n, 'mentions_timeline', maxID=maxID, sinceID=sinceID, ...)
 
 retweetsOfMe <- function(n=25, maxID=NULL, sinceID=NULL, ...)
   authStatusBase(n, 'retweets_of_me', maxID=maxID, sinceID=sinceID, ...)
 
 authStatusBase <- function(n, type, maxID=NULL, sinceID=NULL, ...) {
-  if (!hasOAuth())
+  if (!hasOAuth()) {
     stop("OAuth is required for this functionality")
-
+  }
+  
   params <- buildCommonArgs(max_id=maxID, since_id=sinceID)
   cmd <- paste('statuses', type, sep='/')
   cmd <- paste('statuses', type, sep='/')
