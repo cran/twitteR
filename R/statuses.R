@@ -20,7 +20,9 @@ setRefClass("status",
               statusSource="character",
               screenName="character",
               retweetCount="numeric",
-              retweeted="logical"
+              retweeted="logical",
+              longitude="character",
+              latitude="character"
               ),
             methods=list(
               initialize = function(json, ...) {
@@ -77,6 +79,10 @@ setRefClass("status",
                   } else {
                     retweeted <<- TRUE
                   }
+                  if (!is.null(json[["coordinates"]]) && !(!is.null(json[["coordinates"]][["coordinates"]]))) {
+                    longitude <<- json[["coordinates"]][["coordinates"]]
+                    latitude <<- json[["coordinates"]][["coordinates"]]
+                  }
 
                 }
                 callSuper(...)
@@ -122,13 +128,27 @@ deleteStatus <- function(status, ...) {
     stop("deleteStatus requires OAuth authentication")
   if (!inherits(status, 'status'))
     stop("status argument must be of class status")
-  twInterfaceObj$doAPICall('statuses/destroy', params=list(id=status$getId()), method='POST', ...)
-  TRUE
+  json <- twInterfaceObj$doAPICall(paste('statuses/destroy',
+                                         status$getId(), sep='/'),
+                                   method='POST', ...)
+  if (is.null(json$errors)) {
+    TRUE
+  } else {
+    for (error in json$errors) {
+      cat(error$message, error$code, fill = TRUE)
+    }
+    FALSE
+  }
 }
 
 showStatus <- function(id, ...) {
-  if (!is.numeric(id))
-    stop("id argument must be numeric")
+  if (!is.character(id)) {
+    warning("Using numeric id value can lead to unexpected results for very large ids")
+  }
+  if (is.na(as.numeric(id))) {
+    stop("Malformed id, while it must be a string all ids must be representable as an integer")
+  }
+  
   buildStatus(twInterfaceObj$doAPICall(paste('statuses', 'show', id, sep='/'), ...))
 }
 
@@ -138,7 +158,7 @@ userTimeline <- function(user, n=20, maxID=NULL, sinceID=NULL, includeRts=FALSE,
   params <- buildCommonArgs(max_id=maxID, since_id=sinceID)
   params[['user_id']] <- uParams[['user_id']]
   params[['screen_name']] <- uParams[['screen_name']]
-  params$includeRts = ifelse(includeRts == TRUE, "true", "false")
+  params[["include_rts"]] <- ifelse(includeRts == TRUE, "true", "false")
   statusBase(cmd, params, n, 3200, ...)
 }
 

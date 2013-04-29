@@ -1,12 +1,25 @@
 registerTwitterOAuth <- function(oauth) {
-  require("ROAuth") || stop("ROAuth must be installed for ",
-                            "OAuth functionality")
   if (!inherits(oauth, "OAuth"))
     stop("oauth argument must be of class OAuth")
   if (! oauth$getHandshakeComplete())
     stop("oauth has not completed its handshake")
   assign('oauth', oauth, envir=oauthCache)
   TRUE
+}
+
+getTwitterOAuth = function(consumer_key, consumer_secret) {
+  request_url = "https://api.twitter.com/oauth/request_token"
+  access_url = "http://api.twitter.com/oauth/access_token"
+  auth_url = "http://api.twitter.com/oauth/authorize"
+  
+  cred = OAuthFactory$new(consumerKey=consumer_key,
+                          consumerSecret=consumer_secret,
+                          requestURL=request_url,
+                          accessURL=access_url,
+                          authURL=auth_url)
+  cred$handshake()
+  registerTwitterOAuth(cred)
+  return(cred)
 }
 
 hasOAuth <- function() {
@@ -41,10 +54,18 @@ twFromJSON = function(json) {
 }
 
 doAPICall = function(cmd, params=NULL, method="GET", url=NULL, retryCount=5, 
-                     blockOnRateLimit=FALSE, ...) {
-  recall_func = function(count) {
-    return(doAPICall(cmd, params=params, method=method, url=url, retryCount=count,
-                     blockOnRateLimit=blockOnRateLimit, ...))
+                     retryOnRateLimit=0, ...) {
+  if (!is.numeric(retryOnRateLimit)) {
+    stop("retryOnRateLimit must be a number")
+  }
+  
+  if (!is.numeric(retryCount)) {
+    stop("retryCount must be a number")
+  }
+  
+  recall_func = function(retryCount, rateLimitCount) {
+    return(doAPICall(cmd, params=params, method=method, url=url, retryCount=retryCount,
+                     retryOnRateLimit=rateLimitCount, ...))
   }
   
   if (is.null(url)) {
@@ -64,12 +85,21 @@ doAPICall = function(cmd, params=NULL, method="GET", url=NULL, retryCount=5,
       print(paste("This error is likely transient, retrying up to", retryCount, "more times ..."))
       ## These are typically fail whales or similar such things
       Sys.sleep(1)
-      return(recall_func(retryCount - 1))      
-    } else if ((error_message == "Too Many Requests") && (blockOnRateLimit)) {
-      ## We're rate limited. Wait a while and try again
-      print("Rate limited .... blocking for a minute ...")
-      Sys.sleep(60)
-      return(recall_func(retryCount))      
+      return(recall_func(retryCount - 1, rateLimitCount=retryOnRateLimit))         
+    } else if (error_message == "Too Many Requests") {
+      if (retryOnRateLimit > 0) {
+        ## We're rate limited. Wait a while and try again
+        print("Rate limited .... blocking for a minute ...")
+        Sys.sleep(60)
+        return(recall_func(retryCount, retryOnRateLimit - 1))      
+      } else {
+        ## FIXME: very experimental - the idea is that if we're rate limited,
+        ## just give a warning and return. This should result in rate limited
+        ## operations returning the partial result
+        warning("Rate limit encountered & retry limit reached - returning partial results")
+        ## Setting out to {} will have the JSON creator provide an empty list
+        out = "{}" 
+      }
     } else {
       stop("Error: ", error_message)
     }
@@ -160,15 +190,28 @@ doRppAPICall = function(cmd, num, params, ...) {
   while (curDiff > 0) {
     fromJSON <- twInterfaceObj$doAPICall(cmd, params, 'GET', ...)
     newList <- fromJSON$statuses
+    if (length(newList) == 0) {
+      break;
+    }
     jsonList <- c(jsonList, newList)
     curDiff <- num - length(jsonList)
-    if ((curDiff > 0) && ("search_metadata" %in% names(fromJSON)) && ("max_id_str" %in% names(fromJSON[["search_metadata"]]))) {
-      params[["max_id"]] = fromJSON[["search_metadata"]][["max_id_str"]]
+    search_metadata = fromJSON[["search_metadata"]]
+    if ((curDiff > 0) && (!is.null(search_metadata)) && ("next_results" %in% names(search_metadata)) &&
+          (grep("max_id", search_metadata[["next_results"]]) > 0)) {
+      max_id = strsplit(strsplit(search_metadata[["next_results"]], "max_id=")[[1]][2], "&")[[1]][1]
+      params[["max_id"]] = max_id   
+    } else {
+      ## We've hit the end of what Twitter wants to give us
+      break
     }
   }
   
   if (length(jsonList) > num) {
     jsonList = jsonList[seq_len(num)]
+  }
+  
+  if (length(jsonList) < num) {
+    warning(num, " tweets were requested but the API can only return ", length(jsonList))    
   }
   
   return(jsonList)

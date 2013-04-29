@@ -1,3 +1,26 @@
+4/4/2013 - version 1.1.6:
+   - changed showStatus() to use character based input due to large IDs
+3/26/2013 - version 1.1.5:
+   - Changed 'blockOnRateLimit' (boolean) to 'retryOnRateLimit' (integer). If
+     this value is supplied (to any of the twitteR API wrappers) the system
+     will retry up to N times if Twitter's rate limit in effect. If the 
+     retry limit is reached (even if it was 0) twitteR will now try to return
+     any partial results that had been accumulated prior to the rate limit
+     (with a warning) 
+   - Added function getTwitterOAuth(consumer_key, consumer_secret) which is a 
+     wrapper around the ROAuth creation/handshaking process which embeds the
+     Twitter URLs. Will also call registerTwitterOAuth for you and then return
+     the OAuth credential so you can save it for future use if you wish.
+   - ROAuth (>= 0.9.4) is now a Depends
+3/18/2013 - version 1.1.4:
+   - Allow for by-hour filtering in since/until
+3/17/2013 - version 1.1.3:
+   - Fixing bug from abicky's bugfix - search now works properly w/ max_id
+3/16/2013 - version 1.1.2:
+   - Bug fixes from abicky, remove a browser in statuses.R
+3/3/2013 - version 1.1.1:
+   - Added 'longitude' and 'latitude' fields to the status class,
+     pulls from the 'coordinates' field of a tweet (when available)
 3/1/2013 - version 1.1.0:
    - Release
 2/23/2013 - version 0.99.28:
