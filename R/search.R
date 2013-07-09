@@ -34,8 +34,8 @@ searchTwitter <- function(searchString, n=25, lang=NULL,
 
   if (!is.null(geocode)) {
     geocheck = strsplit(geocode[[1]], ',')[[1]]
-    lon = as.numeric(geocheck[1])
-    lat = as.numeric(geocheck[2])
+    lat = as.numeric(geocheck[1])
+    lon = as.numeric(geocheck[2])
     if ((lon > 180) || (lon < -180)) {
       stop('Longitude need to be in range [180,-180].')
     }
@@ -47,8 +47,10 @@ searchTwitter <- function(searchString, n=25, lang=NULL,
   params <- buildCommonArgs(lang=lang, locale=locale, since=since_date, until=until_date,
                             geocode=geocode, since_id=sinceID)
   params[['q']] <- searchString
+  params[["include_entities"]] = TRUE
+  
   jsonList <- doRppAPICall("search/tweets", n, params=params, retryOnRateLimit=retryOnRateLimit, ...)
-  statuses = sapply(jsonList, buildStatus)
+  statuses = import_statuses(jsonList)
   
   datetimes = sapply(statuses, function(x) x$getCreated())
   if (is.null(since)) {
@@ -65,3 +67,5 @@ searchTwitter <- function(searchString, n=25, lang=NULL,
   return(statuses[good_statuses])
 }
 
+## I don't know how many times I've typod this, making an alias
+searchTwitteR = searchTwitter

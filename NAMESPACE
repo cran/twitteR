@@ -5,7 +5,12 @@ exportMethods(as.data.frame, screenName, show, favorited, replyToSN,
               protected, verified, location, lastStatus, show,
               description, name, id, statusText, truncated, statusSource)
 
+export("searchTwitteR")
+export("favorites")
+exportPattern("^import*")
+exportPattern("^jsonTo*")
 export("getTwitterOAuth")
+export("decode_short_url")
 export("getCurRateLimitInfo")
 export('statusFactory')
 export('buildStatus')

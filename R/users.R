@@ -40,6 +40,13 @@ setRefClass("user",
                     followersCount <<- as.numeric(json[['followers_count']])
                   if (!is.null(json[['friends_count']]))
                     friendsCount <<- as.numeric(json[['friends_count']])
+
+                  ## NOTE: Twitter uses the british spelling for historical reasons
+                  if (!is.null(json[['favourites_count']])) {
+                    favoritesCount <<- as.numeric(json[['favourites_count']])
+                  }
+                  
+                  
                   if ((!is.null(json[['url']]))&&(!is.na(json[['url']])))
                     url <<- json[['url']]
                   if (is.character(json[['name']]))
@@ -98,26 +105,18 @@ setRefClass("user",
                 fri <- .self$getFriendIDs(n, ...)
                 lookupUsers(fri, ...)
               },
-              toDataFrame = function(row.names=NULL, optional=FALSE) {
-                ## FIXME:
-                ## There is such little difference between this version
-                ## and the standard that there has to be a way to take
-                ## advantage of inheritance here
-                fields <- setdiff(names(.self$getRefClass()$fields()),
-                                  'lastStatus')
-                fieldList <- lapply(fields, function(x) {
-                  val <- .self$field(x)
-                  if (length(val) == 0)
-                    NA
-                  else
-                    val
-                })
-                names(fieldList) <- fields
-                as.data.frame(fieldList, row.names=row.names,
-                              optional=optional)
+              getFavouritesCount = function() {
+                return(favoritesCount)
+              },
+              getFavorites = function(n=20, max_id=NULL, since_id=NULL, ...) {
+                return(favorites(screenName, n=n, max_id=max_id, since_id=since_id, ...))
+              },
+              toDataFrame = function(row.names=NULL, optional=FALSE, stringsAsFactors=FALSE) {
+                callSuper(row.names=row.names, optional=optional, stringsAsFactors=stringsAsFactors, 
+                          fieldsToRemove='lastStatus')
               }
-              )
             )
+          )
 
 userFactory <- getRefClass("user")
 userFactory$accessors(names(userFactory$fields()))
@@ -151,6 +150,10 @@ lookupUsers <- function(users, includeNA=FALSE, ...) {
     names(out) <- users
     
     return(out)
+  }
+  
+  if (is.null(users) || length(users) == 0) {
+    return(list())
   }
   
   batches <- split(users, ceiling(seq_along(users) / 100))
