@@ -35,47 +35,67 @@ setRefClass("status",
                     screenName <<- userObj$getScreenName()
                   } else if ('from_user' %in% names(json)) {
                     screenName <<- json[['from_user']]
-                  } else {
+                  } else if ("screen_name" %in% names(json)) {
+                    screenName <<- json[["screen_name"]]  
+                  }  else {
                     screenName <<- "Unknown"
                   }
-                  if (!is.null(json[['text']]))
+                  
+                  if (!is.null(json[['text']])) {
                     text <<- json[['text']]
+                  }
+                  
                   if ((is.null(json[['favorited']])) ||
                       (json[["favorited"]] == FALSE)) {
                     favorited <<- FALSE
                   } else {
                     favorited <<- TRUE
                   }
+                  
                   if ((is.null(json[['truncated']])) ||
                       (json[["truncated"]] == FALSE)) {
                     truncated <<- FALSE
                   } else {
                     truncated <<- TRUE
                   }
-                  if (!is.null(json[['source']]))
-                    statusSource <<- json[['source']]
-                  if (is.null(json[['created_at']]))
+                  
+                  status_source = get_json_value(json, c("source", "status_source"))
+                  if (!is.null(status_source)) {
+                    statusSource <<- status_source
+                  }
+
+                  created_at = get_json_value(json, c("created_at", "created"))
+                  if (is.null(created_at)) {
                     created <<- Sys.time()
-                  else
-                    created <<- twitterDateToPOSIX(json[['created_at']])
-                  if ((!is.null(json[['in_reply_to_screen_name']])) &&
-                      (!is.na(json[['in_reply_to_screen_name']]))) {
-                    replyToSN <<- json[['in_reply_to_screen_name']]
+                  } else {
+                    created <<- twitterDateToPOSIX(created_at)
                   }
-                  if ((!is.null(json[['in_reply_to_status_id_str']])) &&
-                      (!is.na(json[['in_reply_to_status_id_str']]))) {
-                    replyToSID <<- as.character(json[['in_reply_to_status_id_str']])
+                  
+                  in_reply_to_screen_name = get_json_value(json, c("reply_to_s_n", "in_reply_to_screen_name"))
+                  if (!is.null(in_reply_to_screen_name) && (!is.na(in_reply_to_screen_name))) {
+                    replyToSN <<- as.character(in_reply_to_screen_name)
                   }
-                  if ((!is.null(json[['in_reply_to_user_id_str']])) &&
-                      (!is.na(json[['in_reply_to_user_id_str']]))) {
-                    replyToUID <<- as.character(json[['in_reply_to_user_id_str']])
+                  
+                  in_reply_to_sid = get_json_value(json, c("reply_to_s_i_d", "in_reply_to_status_id_str"))
+                  if ((!is.null(in_reply_to_sid)) && (!is.na(in_reply_to_sid))) {
+                    replyToSID <<- as.character(in_reply_to_sid)
                   }
-                  if (!is.null(json[['id_str']])) {
-                    id <<- as.character(json[['id_str']])
+
+                  reply_to_uid = get_json_value(json, c("reply_to_u_i_d", "in_reply_to_user_id_str"))
+                  if ((!is.null(reply_to_uid)) && (!is.na(reply_to_uid))) {
+                    replyToUID <<- as.character(reply_to_uid)
                   }
+
+                  # Note: Make sure id_str is first here, otherwise numeric id will be snagged
+                  id_field = get_json_value(json, c("id_str", "id"))
+                  if (!is.null(id_field)) {
+                    id <<- as.character(id_field)
+                  }
+
                   if (!is.null(json[["retweet_count"]])) {
                     retweetCount <<- as.numeric(json[["retweet_count"]])
                   }
+                  
                   if ((is.null(json[['retweeted']])) ||
                       (json[["retweeted"]] == FALSE)) {
                     retweeted <<- FALSE
@@ -88,10 +108,17 @@ setRefClass("status",
                   if (!is.null(json[["coordinates"]]) && (!is.null(json[["coordinates"]][["coordinates"]]))) {
                     longitude <<- as.character(json[["coordinates"]][["coordinates"]][1])
                     latitude <<- as.character(json[["coordinates"]][["coordinates"]][2])
+                  } else {
+                    if (!is.null(json[["longitude"]])) {
+                      longitude <<- as.character(json[["longitude"]])
+                    }
+                    if (!is.null(json[["latitude"]])) {
+                      latitude <<- as.character(json[["latitude"]])
+                    }
                   }
                   
                   ## If retweeted_status is provided (which contains the full original status), this is a retweet
-                  isRetweet <<- "retweeted_status" %in% names(json)
+                  isRetweet <<- any(c("retweeted_status", "isRetweet") %in% names(json))
                   
                   urls <<- build_urls_data_frame(json)
                 }
@@ -99,6 +126,9 @@ setRefClass("status",
               },
               getRetweets = function(n=20, ...) {
                 return(retweets(self$getId(), n, ...))
+              },
+              getRetweeters = function(n=20, ...) {
+                return(retweeters(self$getId(), n, ...))
               },
               toDataFrame = function(row.names=NULL, optional=FALSE, stringsAsFactors=FALSE) {
                 callSuper(row.names=row.names, optional=optional, stringsAsFactors=stringsAsFactors, 
@@ -112,7 +142,11 @@ statusFactory = getRefClass("status")
 statusFactory$accessors(names(statusFactory$fields()))
 
 buildStatus = function(json) {
-  return(statusFactory$new(json))
+  if (is.null(json)) {
+    NULL
+  } else {
+    statusFactory$new(json)
+  }
 }
 
 setMethod("show", signature="status", function(object) {
@@ -120,8 +154,8 @@ setMethod("show", signature="status", function(object) {
 })
 
 updateStatus <- function(text, lat=NULL, long=NULL, placeID=NULL,
-                         displayCoords=NULL, inReplyTo=NULL, ...) {
-  if (!hasOAuth())
+                         displayCoords=NULL, inReplyTo=NULL, mediaPath=NULL, ...) {
+  if (!has_oauth_token())
     stop("updateStatus requires OAuth authentication")
 
   if (nchar(text) > 140)
@@ -131,7 +165,14 @@ updateStatus <- function(text, lat=NULL, long=NULL, placeID=NULL,
                             display_coordinates=displayCoords,
                             in_reply_to_status_id=inReplyTo)
   params[['status']] <- text
-  json = twInterfaceObj$doAPICall('statuses/update',
+
+  if (is.null(mediaPath)){
+	endpoint = 'statuses/update'
+  } else {
+  	endpoint = 'statuses/update_with_media'
+    params[['media']] <- upload_file(mediaPath)
+  }
+  json = twInterfaceObj$doAPICall(endpoint,
                                  params=params, method='POST', ...)
   return(buildStatus(json))
 }
@@ -141,7 +182,7 @@ tweet = function(text, ...) {
 }
 
 deleteStatus = function(status, ...) {
-  if (!hasOAuth()) {
+  if (!has_oauth_token()) {
     stop("deleteStatus requires OAuth authentication")
   }
   if (!inherits(status, 'status')) {
@@ -161,32 +202,38 @@ deleteStatus = function(status, ...) {
   }
 }
 
+lookup_statuses = function(ids, ...) {
+  sapply(ids, check_id)
+  cmd = "statuses/lookup"
+  params = list(id=paste(ids, collapse=","))
+  # FIXME: Note that this is set to GET but twitter recommends POST. See issue #78
+  return(sapply(twInterfaceObj$doAPICall(cmd, params=params, method="GET", ...), buildStatus))
+}
+
 showStatus = function(id, ...) {
-  if (!is.character(id)) {
-    warning("Using numeric id value can lead to unexpected results for very large ids")
-  }
-  if (is.na(as.numeric(id))) {
-    stop("Malformed id, while it must be a string all ids must be representable as an integer")
-  }
-  
+  check_id(id)  
   buildStatus(twInterfaceObj$doAPICall(paste('statuses', 'show', id, sep='/'), ...))
 }
 
 retweets = function(id, n=20, ...) {
-  if (!is.character(id)) {
-    warning("Using numeric id value can lead to unexpected results for very large ids")
-  }
-  if (is.na(as.numeric(id))) {
-    stop("Malformed id, while it must be a string all ids must be representable as an integer")
-  }
+  check_id(id)
 
-  if (n> 100) {
+  if (n > 100) {
     stop("n must be less than 100, set to ", n)
   }
   
   cmd = "statuses/retweets"
   params = list(id=id, count=n)
   return(sapply(doAPICall(cmd, params=params), buildStatus))  
+}
+
+retweeters = function(id, n=20, ...) {
+  check_id(id)
+  
+  cmd = "statuses/retweeters/ids"
+  params = list(id=id, count=n)
+  json = doCursorAPICall(cmd, "ids", num=n, params=params, method="GET", ...)
+  json
 }
 
 favorites = function(user, n=20, max_id=NULL, since_id=NULL, ...) {
@@ -198,13 +245,14 @@ favorites = function(user, n=20, max_id=NULL, since_id=NULL, ...) {
   return(statusBase(cmd, params, n, 200, ...))
 }
 
-userTimeline = function(user, n=20, maxID=NULL, sinceID=NULL, includeRts=FALSE, ...) {
+userTimeline = function(user, n=20, maxID=NULL, sinceID=NULL, includeRts=FALSE, excludeReplies=FALSE, ...) {
   uParams <- parseUsers(user)
   cmd <- 'statuses/user_timeline'
   params <- buildCommonArgs(max_id=maxID, since_id=sinceID)
   params[['user_id']] <- uParams[['user_id']]
   params[['screen_name']] <- uParams[['screen_name']]
   params[["include_rts"]] <- ifelse(includeRts == TRUE, "true", "false")
+  params[["exclude_replies"]] <- ifelse(excludeReplies == TRUE, "true", "false")
   return(statusBase(cmd, params, n, 3200, ...))
 }
 
@@ -221,7 +269,7 @@ retweetsOfMe <- function(n=25, maxID=NULL, sinceID=NULL, ...) {
 }
 
 authStatusBase <- function(n, type, maxID=NULL, sinceID=NULL, ...) {
-  if (!hasOAuth()) {
+  if (!has_oauth_token()) {
     stop("OAuth is required for this functionality")
   }
   

@@ -1,48 +1,12 @@
-registerTwitterOAuth <- function(oauth) {
-  if (!inherits(oauth, "OAuth"))
-    stop("oauth argument must be of class OAuth")
-  if (! oauth$getHandshakeComplete())
-    stop("oauth has not completed its handshake")
-  assign('oauth', oauth, envir=oauthCache)
-  TRUE
-}
-
-getTwitterOAuth = function(consumer_key, consumer_secret) {
-  request_url = "https://api.twitter.com/oauth/request_token"
-  access_url = "http://api.twitter.com/oauth/access_token"
-  auth_url = "http://api.twitter.com/oauth/authorize"
-  
-  cred = OAuthFactory$new(consumerKey=consumer_key,
-                          consumerSecret=consumer_secret,
-                          requestURL=request_url,
-                          accessURL=access_url,
-                          authURL=auth_url)
-  cred$handshake()
-  registerTwitterOAuth(cred)
-  return(cred)
-}
-
-hasOAuth <- function() {
-  exists('oauth', envir=oauthCache)
-}
-
-getOAuth <- function() {
-  if (!hasOAuth())
-    stop("OAuth has not been registered for this session")
-  get("oauth", envir=oauthCache)
-}
-
 ## twitter API has multiple methods of handling paging issues, not to mention the search API
 ## has a completely different interface.  Trying to manage all of these below using one unified
 ## approach to actually sending the data back & receiving response and then providing multiple
 ## mechanisms to page
-twFromJSON = function(json) {
-  #twitter sends data in UTF-8, paranoidly confirm encoding
-  json = iconv(json, "", "UTF-8", sub="")
+tw_from_response = function(response) {
   ## Will provide some basic error checking, as well as suppress
   ## warnings that always seem to come out of fromJSON, even
-  ## in good cases. 
-  out <- try(suppressWarnings(rjson:::fromJSON(json, unexpected.escape="skip")), silent=TRUE)
+  ## in good cases.
+  out <- try(suppressWarnings(fromJSON(content(response, as="text", encoding="UTF-8"))), silent=TRUE)
   if (inherits(out, "try-error")) {
     stop("Error: Malformed response from server, was not JSON.\n",
          "The most likely cause of this error is Twitter returning a character which\n",
@@ -50,66 +14,77 @@ twFromJSON = function(json) {
          "enough for the offending character to disappear from searches (e.g. if\n",
          "using searchTwitter()).")
   }
-  
-  return(out)
 
+  return(out)
 }
 
-doAPICall = function(cmd, params=NULL, method="GET", url=NULL, retryCount=5, 
-                     retryOnRateLimit=0, ...) {
+doAPICall = function(cmd, params=NULL, method="GET", retryCount=5,
+                     retryOnRateLimit=0, debug=FALSE, ...) {
+  if (debug) {
+    browser()
+  }
+
   if (!is.numeric(retryOnRateLimit)) {
     stop("retryOnRateLimit must be a number")
   }
-  
+
   if (!is.numeric(retryCount)) {
     stop("retryCount must be a number")
   }
-  
+
   recall_func = function(retryCount, rateLimitCount) {
-    return(doAPICall(cmd, params=params, method=method, url=url, retryCount=retryCount,
+    return(doAPICall(cmd, params=params, method=method, retryCount=retryCount,
                      retryOnRateLimit=rateLimitCount, ...))
   }
-  
-  if (is.null(url)) {
-    url <- getAPIStr(cmd)
-  }
-
-  if (!hasOAuth()) {
-    stop("OAuth authentication is required with Twitter's API v1.1")
-  }
-  
-  oauth = getOAuth()
-  out = try(oauth$OAuthRequest(url, params, method, ...), silent=TRUE)
-  if (inherits(out, "try-error")) {
-    error_message = gsub("\\r\\n", "", attr(out, "condition")[["message"]])
-    print(error_message)
-    if (error_message %in% c("Internal Server Error", "Service Unavailable")) {
-      print(paste("This error is likely transient, retrying up to", retryCount, "more times ..."))
-      ## These are typically fail whales or similar such things
-      Sys.sleep(1)
-      return(recall_func(retryCount - 1, rateLimitCount=retryOnRateLimit))         
-    } else if (error_message == "Too Many Requests") {
-      if (retryOnRateLimit > 0) {
-        ## We're rate limited. Wait a while and try again
-        print("Rate limited .... blocking for a minute ...")
-        Sys.sleep(60)
-        return(recall_func(retryCount, retryOnRateLimit - 1))      
-      } else {
-        ## FIXME: very experimental - the idea is that if we're rate limited,
-        ## just give a warning and return. This should result in rate limited
-        ## operations returning the partial result
-        warning("Rate limit encountered & retry limit reached - returning partial results")
-        ## Setting out to {} will have the JSON creator provide an empty list
-        out = "{}" 
-      }
+  url = getAPIStr(cmd)
+  if (method == "POST") {
+    out = try(POST(url, config(token=get_oauth_sig()), body=params), silent=TRUE)
+  } else {
+    if (is.null(params)) {
+      query = NULL
     } else {
-      stop("Error: ", error_message)
+      query = lapply(params, function(x) URLencode(as.character(x)))
     }
-  } 
- 
-  json = twFromJSON(out)
+    out = GET(url, query=query, config(token=get_oauth_sig()))
+  }
 
-  return(json)  
+  httr_status = out$status
+  http_message = http_status(out)$message
+
+  if (httr_status %in% c(500, 502)) {
+    print(http_message)
+    print(paste("This error is likely transient, retrying up to", retryCount, "more times ..."))
+    ## These are typically fail whales or similar such things
+    Sys.sleep(1)
+    return(recall_func(retryCount - 1, rateLimitCount=retryOnRateLimit))
+  } else if (httr_status == 429) {
+    if (retryOnRateLimit > 0) {
+      ## We're rate limited. Wait a while and try again
+      newRateLimit = retryOnRateLimit - 1
+      print(paste("Rate limited .... blocking for a minute and retrying up to", newRateLimit, "times ..."))
+      Sys.sleep(60)
+      return(recall_func(retryCount, newRateLimit))
+    } else {
+      ## FIXME: very experimental - the idea is that if we're rate limited,
+      ## just give a warning and return. This should result in rate limited
+      ## operations returning the partial result
+      warning("Rate limit encountered & retry limit reached - returning partial results")
+      return(NULL)
+    }
+  } else if (httr_status == 401) {
+    stop("OAuth authentication error:\nThis most likely means that you have incorrectly called setup_twitter_oauth()'")
+  } else {
+    ## Generic catch-all for any other errors
+    stop_for_status(out)
+  }
+
+  json = tw_from_response(out, ...)
+
+  if (length(json[["errors"]]) > 0) {
+    stop(json[["errors"]][[1]][["message"]])
+  }
+
+  out = json
 }
 
 setRefClass('twAPIInterface',
@@ -122,7 +97,7 @@ setRefClass('twAPIInterface',
                 callSuper(...)
                 .self
               },
-              twFromJSON = twFromJSON,
+              tw_from_response = tw_from_response,
               doAPICall = doAPICall
               )
             )
@@ -147,8 +122,13 @@ doPagedAPICall = function(cmd, num, params=NULL, method='GET', ...) {
   params[['count']] <- count
   while (total > 0) {
     params[['page']] <- page
-    jsonList <- c(jsonList,
-                  twInterfaceObj$doAPICall(cmd, params, method, ...))
+    results = twInterfaceObj$doAPICall(cmd, params, method, ...)
+    if (is.null(results)) {
+      return(jsonList)
+    }
+
+    jsonList <- c(jsonList, results)
+
     total <- total - count
     page <- page + 1
   }
@@ -170,6 +150,9 @@ doCursorAPICall = function(cmd, type, num=NULL, params=NULL, method='GET', ...) 
   while(cursor != 0) {
     params[['cursor']] <- cursor
     curResults <- twInterfaceObj$doAPICall(cmd, params, method, ...)
+    if (is.null(curResults)) {
+      return(vals)
+    }
     vals <- c(vals, curResults[[type]])
     if ((!is.null(num)) && (length(vals) >= num))
       break
@@ -184,38 +167,46 @@ doRppAPICall = function(cmd, num, params, ...) {
   if (! 'q' %in% names(params))
     stop("parameter 'q' must be supplied")
   maxResults <- twInterfaceObj$getMaxResults()
-  params[['result_type']] <- 'recent'
   params[['count']] <- ifelse(num < maxResults, num, maxResults)
-    
+
   curDiff <- num
   jsonList <- list()
+  ids = list()
   while (curDiff > 0) {
     fromJSON <- twInterfaceObj$doAPICall(cmd, params, 'GET', ...)
-    newList <- fromJSON$statuses
-    if (length(newList) == 0) {
-      break;
+    if (is.null(fromJSON)) {
+      return(jsonList)
     }
+    newList <- fromJSON$statuses
+
+    curIds = sapply(newList, function(x) x[["id"]])
+    dups = which(ids %in% ids)
+    if (length(dups) > 0) {
+      curIds = curIds[-dups]
+      newList = newList[-dups]
+    }
+
+    if (length(curIds) == 0) {
+      break
+    }
+
     jsonList <- c(jsonList, newList)
     curDiff <- num - length(jsonList)
-    search_metadata = fromJSON[["search_metadata"]]
-    if ((curDiff > 0) && (!is.null(search_metadata)) && ("next_results" %in% names(search_metadata)) &&
-          (grep("max_id", search_metadata[["next_results"]]) > 0)) {
-      max_id = strsplit(strsplit(search_metadata[["next_results"]], "max_id=")[[1]][2], "&")[[1]][1]
-      params[["max_id"]] = max_id   
+    if ((curDiff > 0)) { #&& (length(newList) == params[["count"]])) {
+      params[["max_id"]] = as.character(as.integer64(min(curIds)) - 1)
     } else {
-      ## We've hit the end of what Twitter wants to give us
       break
     }
   }
-  
+
   if (length(jsonList) > num) {
     jsonList = jsonList[seq_len(num)]
   }
-  
+
   if (length(jsonList) < num) {
-    warning(num, " tweets were requested but the API can only return ", length(jsonList))    
+    warning(num, " tweets were requested but the API can only return ", length(jsonList))
   }
-  
+
   return(jsonList)
 }
 
@@ -231,7 +222,7 @@ twitterDateToPOSIX <- function(dateStr) {
   curLocale <- Sys.getlocale("LC_TIME")
   on.exit(Sys.setlocale("LC_TIME", curLocale), add=TRUE)
   Sys.setlocale("LC_TIME", "C")
-  
+
   if (!is.na(dateInt)) {
     posDate <- as.POSIXct(dateInt, tz='UTC', origin='1970-01-01')
   } else {
